@@ -4,7 +4,7 @@ import java.util.concurrent.RejectedExecutionException
 
 import org.apache.spark.SparkContext
 import streaming.perf.util.Distribution
-import org.apache.spark.streaming.{Milliseconds, StreamingContext}
+import org.apache.spark.streaming.{State, StateSpec, Milliseconds, StreamingContext}
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.scheduler.StatsReportListener
 import StreamingContext._
@@ -148,6 +148,18 @@ class StateByKeyTest(sc: SparkContext) extends KVDataTest(sc) {
       Some(values.foldLeft(0L)(_ + _) + state.getOrElse(0L))
     }
     inputStream.map(x => (x._1, x._2.toLong)).updateStateByKey[Long](updateFunc, reduceTasks).persist(storageLevel)
+  }
+}
+
+class TrackStateByKeyTest(sc: SparkContext) extends KVDataTest(sc) {
+  // Setup the streaming computations
+  def setupOutputStream(inputStream: DStream[(String, String)]): DStream[_] = {
+    def trackingFunction(data: Option[Long], state: State[Long]): Long = {
+      state.update(state.getOption().getOrElse(0L) + data.getOrElse(0L))
+      state.getOption().getOrElse(0L)
+    }
+    val spec = StateSpec.function[String, Long, Long, Long](trackingFunction _).numPartitions(reduceTasks)
+    inputStream.map(x => (x._1, x._2.toLong)).trackStateByKey[Long, Long](spec)
   }
 }
 
