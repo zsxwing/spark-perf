@@ -154,11 +154,11 @@ class StateByKeyTest(sc: SparkContext) extends KVDataTest(sc) {
 class TrackStateByKeyTest(sc: SparkContext) extends KVDataTest(sc) {
   // Setup the streaming computations
   def setupOutputStream(inputStream: DStream[(String, String)]): DStream[_] = {
-    def trackingFunction(data: Option[Long], state: State[Long]): Long = {
+    val trackingFunction = (data: Option[Long], state: State[Long]) => {
       state.update(state.getOption().getOrElse(0L) + data.getOrElse(0L))
       state.getOption().getOrElse(0L)
     }
-    val spec = StateSpec.function[String, Long, Long, Long](trackingFunction _).numPartitions(reduceTasks)
+    val spec = StateSpec.function[String, Long, Long, Long](trackingFunction).numPartitions(reduceTasks)
     inputStream.map(x => (x._1, x._2.toLong)).trackStateByKey[Long, Long](spec)
   }
 }
