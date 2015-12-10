@@ -76,7 +76,7 @@ abstract class KVDataTest(sc: SparkContext) extends PerfTest(sc) {
     getResults(statsReportListener)
   }
 
-  override def run(): String = {
+  final override def run(): String = {
     processResults(runPerf())
   }
 
@@ -135,9 +135,9 @@ abstract class WindowKVDataTest(sc: SparkContext) extends KVDataTest(sc) {
 
   override def longOptions = super.longOptions ++ Seq(WINDOW_DURATION)
 
-  override def run(): String = {
+  override def doRunPerf(): Seq[(String, Double)] = {
     windowDurationMs = longOptionValue(WINDOW_DURATION)
-    super.run()
+    super.doRunPerf()
   }
 }
 
